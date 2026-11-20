@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+redis
+python-dotenv
+google-genai
+PyJWT
+pwdlib[argon2]
+razorpay
+pydantic

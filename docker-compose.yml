@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:15
+    container_name: cortex_postgres
+    environment:
+      POSTGRES_USER: cortex_admin
+      POSTGRES_PASSWORD: cortex_password
+      POSTGRES_DB: cortex_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cortex_admin -d cortex_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: cortex_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./Backend
+    env_file:
+      - ./Backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://cortex_admin:cortex_password@db:5432/cortex_db
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
